@@ -76,9 +76,9 @@ def get_episodes(podcast: Podcast, expressions, index: int):
                 episode = Episode()
                 episode.id = item["id"]
                 episode.title = item["episodeSerieTitle"] if "episodeSerieTitle" in item else item["title"]
-                episode.description = item["standFirst"]
+                episode.description = item["standFirst"].replace("^H", "")
                 episode.link = "https://www.radiofrance.fr/" + item["path"]
-                episode.date = datetime.datetime.fromtimestamp(item["publishedDate"] / 1e3)
+                episode.date = datetime.datetime.fromtimestamp(item["publishedDate"])
 
                 manifestation = item["manifestations"][0]
                 episode.duration = manifestation["duration"]
@@ -98,9 +98,9 @@ def get_episodes(podcast: Podcast, expressions, index: int):
                 print(f"[{index}] {episode.title}", end="\r")
 
                 podcast.episodes.append(episode)
-        except:
+        except Exception as e:
             print(end="\x1b[2K")
-            print(f"[❌] {episode.title}")
+            print(f"[❌] {episode.title}", e)
 
     if expressions["next"]:
         res = requests.get(f"https://www.radiofrance.fr/api/v2.1/concepts/{podcast.id}/expressions?pageCursor={expressions['next']}&includeFutureExpressionsWithManifestations=true")
@@ -118,7 +118,9 @@ def transform_into_rss_feed(podcast: Podcast):
         return feed_categories
     feed_categories = add_category("", 0)
 
-    for episode in podcast.episodes:
+    for i, episode in enumerate(podcast.episodes):
+        if i != 0:
+            episodes_feed += "\n"
         episodes_feed += f"""<item>
             <title>{episode.title}</title>
             <link>{episode.link}</link>
@@ -129,7 +131,7 @@ def transform_into_rss_feed(podcast: Podcast):
             <guid isPermaLink="false">{episode.id}</guid>
             <pubDate>{formatdate(float(episode.date.strftime('%s')))}</pubDate>
             <itunes:title>{episode.title}</itunes:title>
-            <itunes:image href={podcast.cover} />
+            <itunes:image href="{podcast.cover}" />
             <itunes:author>{podcast.author}</itunes:author>
             <itunes:explicit>no</itunes:explicit>
             <itunes:keywords>{",".join(episode.title.split(" "))}</itunes:keywords>
@@ -137,8 +139,7 @@ def transform_into_rss_feed(podcast: Podcast):
             <itunes:summary>{episode.description}</itunes:summary>
             <itunes:duration>{"{:0>8}".format(str(datetime.timedelta(seconds=episode.duration)))}</itunes:duration>
             <googleplay:block>yes</googleplay:block>
-        </item>
-        """
+        </item>"""
 
     feed = f"""<?xml version="1.0" encoding="UTF-8"?>
 <rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:pa="http://podcastaddict.com" xmlns:podcastRF="http://radiofrance.fr/Lancelot/Podcast#" xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0" version="2.0">
