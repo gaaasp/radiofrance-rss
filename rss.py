@@ -166,8 +166,6 @@ def transform_into_rss_feed(podcast: Podcast):
         </itunes:owner>
         <itunes:subtitle>{podcast.title}</itunes:subtitle>
         <itunes:summary>{podcast.description}</itunes:summary>
-        <itunes:new-feed-url>{podcast.feed}</itunes:new-feed-url>
-        <pa:new-feed-url>{podcast.feed}</pa:new-feed-url>
         <podcastRF:originStation>{podcast.station}</podcastRF:originStation>
         <googleplay:block>yes</googleplay:block>
         {episodes_feed}
