@@ -3,6 +3,7 @@ import json
 import datetime
 from time import sleep
 from email.utils import formatdate
+import sys
 
 class Podcast:
     id = ""
@@ -107,19 +108,18 @@ def get_episodes(podcast: Podcast, expressions, index: int):
 
 def transform_into_rss_feed(podcast: Podcast):
     episodes_feed = ""
-    feed_categories = """
-    """
-    def add_category(i: int):
+    def add_category(feed_categories: str, i: int):
         if i == len(podcast.categories) - 1:
             feed_categories += f"<itunes:category text=\"{podcast.categories[i]}\" />"
         else:
             feed_categories += f"<itunes:category text=\"{podcast.categories[i]}\">"
-            add_category(i + 1)
+            feed_categories = add_category(feed_categories, i + 1)
             feed_categories += "</itunes:category>"
+        return feed_categories
+    feed_categories = add_category("", 0)
 
     for episode in podcast.episodes:
-        episodes_feed += f"""
-        <item>
+        episodes_feed += f"""<item>
             <title>{episode.title}</title>
             <link>{episode.link}</link>
             <description>{episode.description}</description>
@@ -140,38 +140,38 @@ def transform_into_rss_feed(podcast: Podcast):
         </item>
         """
 
-    feed = f"""
-    <rss version="2.0">
-        <channel>
+    feed = f"""<?xml version="1.0" encoding="UTF-8"?>
+<rss xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd" xmlns:pa="http://podcastaddict.com" xmlns:podcastRF="http://radiofrance.fr/Lancelot/Podcast#" xmlns:googleplay="http://www.google.com/schemas/play-podcasts/1.0" version="2.0">
+    <channel>
+        <title>{podcast.title}</title>
+        <link>{podcast.link}</link>
+        <description>{podcast.description}</description>
+        <language>fr</language>
+        <copyright>Radio France</copyright>
+        <lastBuildDate>{formatdate(float(datetime.datetime.now().strftime('%s')))}</lastBuildDate>
+        <generator>Radio France</generator>
+        <image>
+            <url>{podcast.cover}</url>
             <title>{podcast.title}</title>
             <link>{podcast.link}</link>
-            <description>{podcast.description}</description>
-            <language>fr</language>
-            <copyright>Radio France</copyright>
-            <lastBuildDate>{formatdate(float(datetime.datetime.now().strftime('%s')))}</lastBuildDate>
-            <generator>Radio France</generator>
-            <image>
-                <url>{podcast.cover}</url>
-                <title>{podcast.title}</title>
-                <link>{podcast.link}</link>
-            </image>
-            {feed_categories}
-            <itunes:author>{podcast.author}</itunes:author>
-            <itunes:explicit>no</itunes:explicit>
-            <itunes:image href="{podcast.cover}" />
-            <itunes:owner>
-                <itunes:email>podcast@radiofrance.com</itunes:email>
-                <itunes:name>Radio France</itunes:name>
-            </itunes:owner>
-            <itunes:subtitle>{podcast.title}</itunes:subtitle>
-            <itunes:summary>{podcast.description}</itunes:summary>
-            <itunes:new-feed-url>{podcast.feed}</itunes:new-feed-url>
-            <pa:new-feed-url>{podcast.feed}</pa:new-feed-url>
-            <podcastRF:originStation>{podcast.station}</podcastRF:originStation>
-            <googleplay:block>yes</googleplay:block>
-            {episodes_feed}
-        </channel>
-    </rss>
+        </image>
+        {feed_categories}
+        <itunes:author>{podcast.author}</itunes:author>
+        <itunes:explicit>no</itunes:explicit>
+        <itunes:image href="{podcast.cover}" />
+        <itunes:owner>
+            <itunes:email>podcast@radiofrance.com</itunes:email>
+            <itunes:name>Radio France</itunes:name>
+        </itunes:owner>
+        <itunes:subtitle>{podcast.title}</itunes:subtitle>
+        <itunes:summary>{podcast.description}</itunes:summary>
+        <itunes:new-feed-url>{podcast.feed}</itunes:new-feed-url>
+        <pa:new-feed-url>{podcast.feed}</pa:new-feed-url>
+        <podcastRF:originStation>{podcast.station}</podcastRF:originStation>
+        <googleplay:block>yes</googleplay:block>
+        {episodes_feed}
+    </channel>
+</rss>
     """
 
     return feed
