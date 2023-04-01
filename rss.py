@@ -38,16 +38,16 @@ def main():
 
 def get_podcast(url: str):
     res = requests.get(url)
-    data1, data2 = res.text.split("\n")[-6:-4]
+    data1, data2 = res.text.split("\n")[-30:-28]
 
-    data1 = data1.split(">")[1]
-    data1 = data1.split("<")[0]
+    data1 = "".join(data1.split(">")[1:])
+    data1 = data1.split("</script")[0]
     data1 = json.loads(data1)
     data1 = data1["body"]
     data1 = json.loads(data1)
 
-    data2 = data2.split(">")[1]
-    data2 = data2.split("<")[0]
+    data2 = "".join(data2.split(">")[1:])
+    data2 = data2.split("</script")[0]
     data2 = json.loads(data2)
     data2 = data2["body"]
     data2 = json.loads(data2)
@@ -76,7 +76,7 @@ def get_episodes(podcast: Podcast, expressions, index: int):
                 episode = Episode()
                 episode.id = item["id"]
                 episode.title = item["episodeSerieTitle"] if "episodeSerieTitle" in item else item["title"]
-                episode.description = item["standFirst"].replace("^H", "")
+                episode.description = item["standFirst"].replace("^H", "") if type(item["standFirst"]) == "string" else ""
                 episode.link = "https://www.radiofrance.fr/" + item["path"]
                 episode.date = datetime.datetime.fromtimestamp(item["publishedDate"])
 
@@ -109,7 +109,9 @@ def get_episodes(podcast: Podcast, expressions, index: int):
 def transform_into_rss_feed(podcast: Podcast):
     episodes_feed = ""
     def add_category(feed_categories: str, i: int):
-        if i == len(podcast.categories) - 1:
+        if i >= len(podcast.categories):
+            return feed_categories
+        elif i == len(podcast.categories) - 1:
             feed_categories += f"<itunes:category text=\"{podcast.categories[i]}\" />"
         else:
             feed_categories += f"<itunes:category text=\"{podcast.categories[i]}\">"
