@@ -77,7 +77,7 @@ def get_episodes(podcast: Podcast, expressions, index: int):
                 episode.id = item["id"]
                 episode.title = item["episodeSerieTitle"] if "episodeSerieTitle" in item else item["title"]
                 episode.description = item["standFirst"].replace("^H", "") if type(item["standFirst"]) == "string" else ""
-                episode.link = "https://www.radiofrance.fr/" + item["path"]
+                episode.link = ("https://www.radiofrance.fr/" + item["path"]) if "path" in item and type(item["path"]) == "string" else podcast.link
                 episode.date = datetime.datetime.fromtimestamp(item["publishedDate"])
 
                 manifestation = item["manifestations"][0]
